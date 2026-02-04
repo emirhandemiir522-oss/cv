@@ -50,7 +50,7 @@ Important:
 - Keep bullets concise (1-2 lines max)
 - ATS-friendly format only`
 
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAIClient().chat.completions.create({
     model: 'gpt-4-turbo-preview',
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },
@@ -82,7 +82,7 @@ Output JSON:
   "recommendations": ["string"]
 }`
 
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAIClient().chat.completions.create({
     model: 'gpt-4-turbo-preview',
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },
