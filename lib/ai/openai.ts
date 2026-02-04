@@ -9,6 +9,7 @@ const getOpenAIClient = () => {
 }
 
 export async function generateResume(inputData: any) {
+  const openai = getOpenAIClient()
   const prompt = `You are a professional ATS resume writer.
 Convert this profile data (extracted from LinkedIn or a resume file) into a clean, ATS-friendly resume with quantified impact bullets.
 
@@ -60,6 +61,7 @@ Important:
 }
 
 export async function optimizeResumeForJob(resumeData: any, jobData: any) {
+  const openai = getOpenAIClient()
   const prompt = `Job Posting:
 ${JSON.stringify(jobData, null, 2)}
 

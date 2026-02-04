@@ -6,13 +6,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default function SignupPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
-    const supabase = createClient()
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -20,6 +21,7 @@ export default function SignupPage() {
         setError(null)
 
         try {
+            const supabase = createClient()
             // Sign up user
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
