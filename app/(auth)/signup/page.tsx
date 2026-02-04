@@ -28,75 +28,26 @@ export default function SignupPage() {
                 password,
                 options: {
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
-                    data: {
-                        full_name: email.split('@')[0]
-                    }
                 }
             })
 
             if (authError) {
-                console.error('Signup error:', authError)
-                throw new Error(authError.message)
+                throw authError
             }
 
             if (!authData.user) {
-                throw new Error('Failed to create account. Please try again.')
+                throw new Error('Failed to create account')
             }
-
-            console.log('User signed up:', authData.user.id)
 
             if (authData.session) {
-                console.log('Session created immediately, redirecting to dashboard')
                 router.push('/dashboard')
                 router.refresh()
-                return
+            } else {
+                router.push('/login?message=Account created! Please log in.')
             }
-
-            console.log('No session yet, confirming email and signing in...')
-
-            try {
-                await fetch('/api/auth/confirm-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: authData.user.id })
-                })
-            } catch (err) {
-                console.warn('Email confirmation failed, will try to sign in anyway')
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            })
-
-            if (signInError) {
-                console.error('Auto sign-in failed:', signInError)
-                setError('Account created successfully! Please check your email to confirm your account, then log in.')
-                setLoading(false)
-                return
-            }
-
-            if (!signInData.session) {
-                setError('Account created successfully! Please check your email to confirm your account, then log in.')
-                setLoading(false)
-                return
-            }
-
-            console.log('User signed in successfully')
-
-            fetch('/api/email/welcome', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: authData.user.email })
-            }).catch(() => {})
-
-            router.push('/dashboard')
-            router.refresh()
         } catch (err: any) {
-            console.error('Signup error:', err)
-            setError(err.message || 'An error occurred during signup. Please try again.')
+            setError(err.message || 'Failed to create account')
+        } finally {
             setLoading(false)
         }
     }

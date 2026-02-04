@@ -1,24 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, ArrowRight, Github } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default function LoginPage() {
+function LoginForm() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [message, setMessage] = useState<string | null>(null)
     const router = useRouter()
+    const searchParams = useSearchParams()
+
+    useEffect(() => {
+        const msg = searchParams.get('message')
+        if (msg) {
+            setMessage(msg)
+        }
+    }, [searchParams])
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setError(null)
+        setMessage(null)
 
         try {
             const supabase = createClient()
@@ -28,21 +38,17 @@ export default function LoginPage() {
             })
 
             if (error) {
-                console.error('Login error:', error)
                 throw error
             }
 
             if (!data.session) {
-                throw new Error('No session created. Please check your credentials.')
+                throw new Error('Invalid credentials')
             }
-
-            console.log('User logged in successfully')
 
             router.push('/dashboard')
             router.refresh()
         } catch (err: any) {
-            console.error('Login error:', err)
-            setError(err.message || 'An error occurred during login')
+            setError(err.message || 'Invalid email or password')
         } finally {
             setLoading(false)
         }
@@ -85,6 +91,13 @@ export default function LoginPage() {
                         required
                     />
                 </div>
+
+                {message && (
+                    <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm border border-green-100 flex items-center gap-2">
+                        <span className="w-1 h-4 bg-green-500 rounded-full" />
+                        {message}
+                    </div>
+                )}
 
                 {error && (
                     <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100 flex items-center gap-2">
@@ -140,5 +153,13 @@ export default function LoginPage() {
                 </Link>
             </p>
         </div>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="animate-pulse">Loading...</div>}>
+            <LoginForm />
+        </Suspense>
     )
 }
