@@ -30,11 +30,17 @@ export default function SignupPage() {
             if (authError) throw authError
 
             if (authData.user) {
-                await fetch('/api/auth/confirm-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: authData.user.id })
-                })
+                try {
+                    await fetch('/api/auth/confirm-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: authData.user.id })
+                    })
+                } catch (err) {
+                    console.warn('Email confirmation API call failed:', err)
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 1500))
 
                 const { error: signInError } = await supabase.auth.signInWithPassword({
                     email,
@@ -43,6 +49,7 @@ export default function SignupPage() {
 
                 if (signInError) {
                     console.error('Auto sign-in failed:', signInError)
+                    throw signInError
                 }
 
                 try {
