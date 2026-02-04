@@ -3,11 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { ApifyClient } from 'apify-client'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-const apify = new ApifyClient({ token: process.env.APIFY_API_TOKEN })
-
 export async function POST(request: Request) {
     try {
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+        const apify = new ApifyClient({ token: process.env.APIFY_API_TOKEN })
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
 

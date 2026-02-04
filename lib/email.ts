@@ -1,9 +1,8 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function sendWelcomeEmail(email: string) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY)
     const data = await resend.emails.send({
       from: 'onboarding@resend.dev', // Can only verify this on Resend dashboard with custom domain, but default works for testing
       to: email,
