@@ -22,52 +22,77 @@ export default function SignupPage() {
 
         try {
             const supabase = createClient()
+
             const { data: authData, error: authError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                }
+            })
+
+            if (authError) {
+                console.error('Signup error:', authError)
+                throw authError
+            }
+
+            if (!authData.user) {
+                throw new Error('No user data returned from signup')
+            }
+
+            console.log('User signed up:', authData.user.id)
+
+            if (authData.session) {
+                console.log('User already has session, redirecting to dashboard')
+                router.push('/dashboard')
+                router.refresh()
+                return
+            }
+
+            try {
+                const confirmRes = await fetch('/api/auth/confirm-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: authData.user.id })
+                })
+                console.log('Email confirmation response:', confirmRes.status)
+            } catch (err) {
+                console.warn('Email confirmation API call failed:', err)
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 2000))
+
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
 
-            if (authError) throw authError
-
-            if (authData.user) {
-                try {
-                    await fetch('/api/auth/confirm-email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: authData.user.id })
-                    })
-                } catch (err) {
-                    console.warn('Email confirmation API call failed:', err)
-                }
-
-                await new Promise(resolve => setTimeout(resolve, 1500))
-
-                const { error: signInError } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
-                })
-
-                if (signInError) {
-                    console.error('Auto sign-in failed:', signInError)
-                    throw signInError
-                }
-
-                try {
-                    await fetch('/api/email/welcome', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: authData.user.email })
-                    })
-                } catch (emailError) {
-                    console.warn('Welcome email failed:', emailError)
-                }
-
-                router.push('/dashboard')
-                router.refresh()
+            if (signInError) {
+                console.error('Auto sign-in failed:', signInError)
+                throw new Error(`Sign in failed: ${signInError.message}. Please try logging in manually.`)
             }
+
+            if (!signInData.session) {
+                throw new Error('No session created. Please try logging in.')
+            }
+
+            console.log('User signed in successfully')
+
+            try {
+                await fetch('/api/email/welcome', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: authData.user.email })
+                })
+            } catch (emailError) {
+                console.warn('Welcome email failed:', emailError)
+            }
+
+            router.push('/dashboard')
+            router.refresh()
         } catch (err: any) {
-            setError(err.message)
-        } finally {
+            console.error('Signup error:', err)
+            setError(err.message || 'An error occurred during signup')
             setLoading(false)
         }
     }

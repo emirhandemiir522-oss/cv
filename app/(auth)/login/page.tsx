@@ -22,16 +22,27 @@ export default function LoginPage() {
 
         try {
             const supabase = createClient()
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
 
-            if (error) throw error
+            if (error) {
+                console.error('Login error:', error)
+                throw error
+            }
+
+            if (!data.session) {
+                throw new Error('No session created. Please check your credentials.')
+            }
+
+            console.log('User logged in successfully')
 
             router.push('/dashboard')
+            router.refresh()
         } catch (err: any) {
-            setError(err.message)
+            console.error('Login error:', err)
+            setError(err.message || 'An error occurred during login')
         } finally {
             setLoading(false)
         }

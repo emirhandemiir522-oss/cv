@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) =>
+                    cookiesToSet.forEach(({ name, value }) =>
                         request.cookies.set(name, value)
                     )
                     response = NextResponse.next({
@@ -31,18 +31,24 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    try {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser()
 
-    // Protect dashboard and editor routes
-    if ((request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/editor')) && !user) {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
+        // Protect dashboard and editor routes
+        if ((request.nextUrl.pathname.startsWith('/dashboard') ||
+             request.nextUrl.pathname.startsWith('/editor') ||
+             request.nextUrl.pathname.startsWith('/optimize')) && !user) {
+            return NextResponse.redirect(new URL('/login', request.url))
+        }
 
-    // Redirect to dashboard if already logged in
-    if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') && user) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+        // Redirect to dashboard if already logged in
+        if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') && user) {
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+    } catch (error) {
+        console.error('Middleware auth error:', error)
     }
 
     return response
