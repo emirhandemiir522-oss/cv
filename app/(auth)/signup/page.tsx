@@ -22,43 +22,41 @@ export default function SignupPage() {
 
         try {
             const supabase = createClient()
-            // Sign up user
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
                 password,
-                options: {
-                    emailRedirectTo: `${location.origin}/auth/callback`,
-                },
             })
 
             if (authError) throw authError
 
             if (authData.user) {
-                // Create user record with trial
-                const { error: insertError } = await supabase
-                    .from('users')
-                    .insert({
-                        id: authData.user.id,
-                        email: authData.user.email,
-                        trial_started_at: new Date().toISOString(),
-                        subscription_status: 'trialing',
-                    })
-
-                if (insertError) {
-                    console.error('User db insert error:', insertError)
-                    setError('Veritabanı kayıt hatası (RLS): ' + insertError.message)
-                    setLoading(false)
-                    return
-                }
-
-                // Send Welcome Email
-                await fetch('/api/email/welcome', {
+                await fetch('/api/auth/confirm-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: authData.user.email })
+                    body: JSON.stringify({ userId: authData.user.id })
                 })
 
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                })
+
+                if (signInError) {
+                    console.error('Auto sign-in failed:', signInError)
+                }
+
+                try {
+                    await fetch('/api/email/welcome', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: authData.user.email })
+                    })
+                } catch (emailError) {
+                    console.warn('Welcome email failed:', emailError)
+                }
+
                 router.push('/dashboard')
+                router.refresh()
             }
         } catch (err: any) {
             setError(err.message)
