@@ -28,39 +28,43 @@ export default function SignupPage() {
                 password,
                 options: {
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    data: {
+                        full_name: email.split('@')[0]
+                    }
                 }
             })
 
             if (authError) {
                 console.error('Signup error:', authError)
-                throw authError
+                throw new Error(authError.message)
             }
 
             if (!authData.user) {
-                throw new Error('No user data returned from signup')
+                throw new Error('Failed to create account. Please try again.')
             }
 
             console.log('User signed up:', authData.user.id)
 
             if (authData.session) {
-                console.log('User already has session, redirecting to dashboard')
+                console.log('Session created immediately, redirecting to dashboard')
                 router.push('/dashboard')
                 router.refresh()
                 return
             }
 
+            console.log('No session yet, confirming email and signing in...')
+
             try {
-                const confirmRes = await fetch('/api/auth/confirm-email', {
+                await fetch('/api/auth/confirm-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId: authData.user.id })
                 })
-                console.log('Email confirmation response:', confirmRes.status)
             } catch (err) {
-                console.warn('Email confirmation API call failed:', err)
+                console.warn('Email confirmation failed, will try to sign in anyway')
             }
 
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            await new Promise(resolve => setTimeout(resolve, 1000))
 
             const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                 email,
@@ -69,30 +73,30 @@ export default function SignupPage() {
 
             if (signInError) {
                 console.error('Auto sign-in failed:', signInError)
-                throw new Error(`Sign in failed: ${signInError.message}. Please try logging in manually.`)
+                setError('Account created successfully! Please check your email to confirm your account, then log in.')
+                setLoading(false)
+                return
             }
 
             if (!signInData.session) {
-                throw new Error('No session created. Please try logging in.')
+                setError('Account created successfully! Please check your email to confirm your account, then log in.')
+                setLoading(false)
+                return
             }
 
             console.log('User signed in successfully')
 
-            try {
-                await fetch('/api/email/welcome', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: authData.user.email })
-                })
-            } catch (emailError) {
-                console.warn('Welcome email failed:', emailError)
-            }
+            fetch('/api/email/welcome', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: authData.user.email })
+            }).catch(() => {})
 
             router.push('/dashboard')
             router.refresh()
         } catch (err: any) {
             console.error('Signup error:', err)
-            setError(err.message || 'An error occurred during signup')
+            setError(err.message || 'An error occurred during signup. Please try again.')
             setLoading(false)
         }
     }
@@ -134,7 +138,11 @@ export default function SignupPage() {
                 </div>
 
                 {error && (
-                    <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
+                    <div className={`p-3 rounded-lg text-sm border ${
+                        error.includes('successfully') || error.includes('check your email')
+                            ? 'bg-green-50 text-green-700 border-green-100'
+                            : 'bg-red-50 text-red-600 border-red-100'
+                    }`}>
                         {error}
                     </div>
                 )}

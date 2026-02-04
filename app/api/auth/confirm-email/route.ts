@@ -9,6 +9,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.warn('SUPABASE_SERVICE_ROLE_KEY not set, skipping email confirmation')
+      return NextResponse.json({ success: false, message: 'Service role key not configured' }, { status: 200 })
+    }
+
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -26,12 +31,12 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Email confirmation error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, error: error.message }, { status: 200 })
     }
 
     return NextResponse.json({ success: true, data })
   } catch (error: any) {
     console.error('Confirm email error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ success: false, error: error.message }, { status: 200 })
   }
 }
