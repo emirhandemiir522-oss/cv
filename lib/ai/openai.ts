@@ -1,8 +1,12 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+const getOpenAIClient = () => {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not defined')
+  }
+  return new OpenAI({ apiKey })
+}
 
 export async function generateResume(inputData: any) {
   const prompt = `You are a professional ATS resume writer.
