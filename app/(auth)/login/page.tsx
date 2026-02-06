@@ -25,15 +25,13 @@ function LoginForm() {
 
         try {
             const formData = new FormData(e.currentTarget)
-            const result = await login(formData)
-
-            if (result?.error) {
-                setError(result.error)
-                setLoading(false)
-            }
-        } catch {
-            setError('An unexpected error occurred. Please try again.')
+            await login(formData)
+        } catch (err) {
             setLoading(false)
+            if (err instanceof Error && err.message.includes('NEXT_REDIRECT')) {
+                return
+            }
+            setError('An unexpected error occurred. Please try again.')
         }
     }
 
