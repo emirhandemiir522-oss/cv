@@ -16,6 +16,8 @@ export default function SignupPage() {
             const result = await signup(formData)
             if (result?.error) {
                 setError(result.error)
+            } else if (result?.redirect) {
+                window.location.href = result.redirect
             }
         })
     }

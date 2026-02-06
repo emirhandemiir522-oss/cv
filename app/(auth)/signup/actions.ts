@@ -1,7 +1,7 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 export async function signup(formData: FormData) {
     const supabase = await createClient()
@@ -18,9 +18,11 @@ export async function signup(formData: FormData) {
         return { error: error.message }
     }
 
+    revalidatePath('/', 'layout')
+
     if (data.session) {
-        redirect('/dashboard')
+        return { success: true, redirect: '/dashboard' }
     }
 
-    redirect('/login?message=Account created! Please log in.')
+    return { success: true, redirect: '/login?message=Account created! Please log in.' }
 }
