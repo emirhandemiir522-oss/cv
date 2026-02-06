@@ -1,25 +1,44 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
-import { signup } from './actions'
+import { createClient } from '@/lib/supabase/client'
 
 export default function SignupPage() {
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [isPending, startTransition] = useTransition()
 
-    const handleSubmit = (formData: FormData) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setLoading(true)
         setError(null)
 
-        startTransition(async () => {
-            const result = await signup(formData)
-            if (result?.error) {
-                setError(result.error)
-            } else if (result?.redirect) {
-                window.location.href = result.redirect
-            }
+        const supabase = createClient()
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
         })
+
+        if (error) {
+            if (error.message === 'User already registered') {
+                setError('An account with this email already exists. Please sign in instead.')
+            } else {
+                setError(error.message)
+            }
+            setLoading(false)
+            return
+        }
+
+        if (data.session) {
+            window.location.href = '/dashboard'
+            return
+        }
+
+        window.location.href = '/login?message=Account created! Please log in.'
     }
 
     return (
@@ -34,13 +53,14 @@ export default function SignupPage() {
                 <p className="text-gray-500 text-sm mt-2">Get 7 days of unlimited AI resume optimization</p>
             </div>
 
-            <form action={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
                     <input
                         type="email"
-                        name="email"
                         placeholder="name@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black outline-none transition-all text-gray-900"
                         required
                     />
@@ -49,8 +69,9 @@ export default function SignupPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Create Password</label>
                     <input
                         type="password"
-                        name="password"
                         placeholder="At least 6 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black outline-none transition-all text-gray-900"
                         required
                     />
@@ -64,10 +85,10 @@ export default function SignupPage() {
 
                 <button
                     type="submit"
-                    disabled={isPending}
+                    disabled={loading}
                     className="w-full flex items-center justify-center py-2.5 bg-black hover:bg-gray-900 text-white rounded-lg font-medium transition-all shadow-lg shadow-black/20 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Start Free Trial'}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Start Free Trial'}
                 </button>
             </form>
 

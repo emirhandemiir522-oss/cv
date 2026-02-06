@@ -1,36 +1,44 @@
 'use client'
 
-import { useState, useEffect, Suspense, useTransition } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, ArrowRight, Github } from 'lucide-react'
-import { login } from './actions'
+import { createClient } from '@/lib/supabase/client'
 
 function LoginForm() {
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [message, setMessage] = useState<string | null>(null)
-    const [isPending, startTransition] = useTransition()
     const searchParams = useSearchParams()
 
     useEffect(() => {
         const msg = searchParams.get('message')
-        if (msg) {
-            setMessage(msg)
-        }
+        if (msg) setMessage(msg)
     }, [searchParams])
 
-    const handleSubmit = (formData: FormData) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setLoading(true)
         setError(null)
         setMessage(null)
 
-        startTransition(async () => {
-            const result = await login(formData)
-            if (result?.error) {
-                setError(result.error)
-            } else if (result?.success) {
-                window.location.href = '/dashboard'
-            }
+        const supabase = createClient()
+
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
         })
+
+        if (error) {
+            setError(error.message)
+            setLoading(false)
+            return
+        }
+
+        window.location.href = '/dashboard'
     }
 
     return (
@@ -44,13 +52,14 @@ function LoginForm() {
                 <p className="text-gray-500">Enter your credentials to verify your account.</p>
             </div>
 
-            <form action={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-900">Email</label>
                     <input
                         type="email"
-                        name="email"
                         placeholder="name@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-gray-400 text-black"
                         required
                     />
@@ -62,8 +71,9 @@ function LoginForm() {
                     </div>
                     <input
                         type="password"
-                        name="password"
-                        placeholder="••••••••"
+                        placeholder="--------"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-gray-400 text-black"
                         required
                     />
@@ -85,10 +95,10 @@ function LoginForm() {
 
                 <button
                     type="submit"
-                    disabled={isPending}
+                    disabled={loading}
                     className="w-full flex items-center justify-center gap-2 py-3 bg-black hover:bg-gray-900 text-white rounded-xl font-medium transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                    {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                         <>
                             Sign In
                             <ArrowRight className="w-4 h-4" />
@@ -124,7 +134,7 @@ function LoginForm() {
             </div>
 
             <p className="mt-8 text-center text-sm text-gray-500">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link href="/signup" className="font-semibold text-black hover:underline underline-offset-4">
                     Sign up
                 </Link>

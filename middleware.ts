@@ -29,10 +29,6 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
-
     const pathname = request.nextUrl.pathname
 
     const isProtectedRoute = pathname.startsWith('/dashboard') ||
@@ -40,6 +36,29 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/optimize')
 
     const isAuthRoute = pathname === '/login' || pathname === '/signup'
+
+    if (!isProtectedRoute && !isAuthRoute) {
+        return supabaseResponse
+    }
+
+    let user = null
+
+    try {
+        const { data, error } = await supabase.auth.getUser()
+        user = data.user
+
+        if (!user && error) {
+            const { data: sessionData } = await supabase.auth.getSession()
+            user = sessionData.session?.user ?? null
+        }
+    } catch {
+        const hasAuthCookies = request.cookies.getAll().some(
+            cookie => cookie.name.startsWith('sb-') && cookie.name.includes('auth-token')
+        )
+        if (hasAuthCookies && isProtectedRoute) {
+            return supabaseResponse
+        }
+    }
 
     if (isProtectedRoute && !user) {
         const url = request.nextUrl.clone()
