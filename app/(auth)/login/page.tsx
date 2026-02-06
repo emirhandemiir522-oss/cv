@@ -61,8 +61,16 @@ function LoginForm() {
                 throw new Error('Invalid credentials')
             }
 
-            console.log('✅ Login successful! Redirecting...')
-            router.replace('/dashboard')
+            console.log('✅ Login successful!')
+            console.log('📝 Session details:', {
+                accessToken: data.session.access_token.substring(0, 20) + '...',
+                expiresAt: data.session.expires_at
+            })
+
+            await new Promise(resolve => setTimeout(resolve, 100))
+
+            console.log('🔄 Redirecting to dashboard...')
+            window.location.href = '/dashboard'
         } catch (err: any) {
             console.error('💥 Login catch error:', err)
             setError(err.message || 'Invalid email or password')

@@ -34,32 +34,47 @@ export default function DashboardPage() {
     const router = useRouter()
 
     useEffect(() => {
+        let mounted = true
+
         const checkAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser()
 
-            if (!session) {
-                router.replace('/login')
-                return
+                if (!mounted) return
+
+                if (error || !user) {
+                    router.replace('/login')
+                    return
+                }
+
+                setUser(user)
+
+                const { data, error: resumesError } = await supabase
+                    .from('resumes')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(5)
+
+                if (!resumesError && mounted) {
+                    setResumes(data || [])
+                }
+                if (mounted) {
+                    setLoading(false)
+                }
+            } catch (err) {
+                console.error('Dashboard auth error:', err)
+                if (mounted) {
+                    router.replace('/login')
+                }
             }
-
-            setUser(session.user)
-
-            const { data, error: resumesError } = await supabase
-                .from('resumes')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .order('created_at', { ascending: false })
-                .limit(5)
-
-            if (!resumesError) {
-                setResumes(data || [])
-            }
-            setLoading(false)
         }
 
         checkAuth()
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (!mounted) return
+
             if (!session) {
                 router.replace('/login')
             } else {
@@ -67,8 +82,11 @@ export default function DashboardPage() {
             }
         })
 
-        return () => subscription.unsubscribe()
-    }, [])
+        return () => {
+            mounted = false
+            subscription.unsubscribe()
+        }
+    }, [router, supabase])
 
     const handleCreateBase = async () => {
         setCreating(true)
