@@ -62,13 +62,16 @@ function LoginForm() {
             }
 
             console.log('✅ Login successful! Session created.')
-            console.log('🔄 Redirecting to dashboard...')
+            console.log('🔄 Refreshing router and redirecting...')
 
-            // Force a hard navigation to ensure cookies are set
-            window.location.href = '/dashboard'
+            // Refresh the router to update server-side session
+            router.refresh()
 
-            // Wait a bit to ensure redirect happens
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            // Small delay to ensure cookies are processed
+            await new Promise(resolve => setTimeout(resolve, 100))
+
+            // Navigate to dashboard
+            router.push('/dashboard')
         } catch (err: any) {
             console.error('💥 Login catch error:', err)
             setError(err.message || 'Invalid email or password')

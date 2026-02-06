@@ -14,21 +14,13 @@ export async function middleware(request: NextRequest) {
         {
             cookies: {
                 getAll() {
-                    const cookies = request.cookies.getAll()
-                    console.log('🍪 Getting cookies:', cookies.length, 'cookies found')
-                    return cookies
+                    return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    console.log('🍪 Setting cookies:', cookiesToSet.length)
-                    cookiesToSet.forEach(({ name, value }) =>
+                    cookiesToSet.forEach(({ name, value, options }) => {
                         request.cookies.set(name, value)
-                    )
-                    supabaseResponse = NextResponse.next({
-                        request,
-                    })
-                    cookiesToSet.forEach(({ name, value, options }) =>
                         supabaseResponse.cookies.set(name, value, options)
-                    )
+                    })
                 },
             },
         }

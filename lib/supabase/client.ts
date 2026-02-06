@@ -1,17 +1,10 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-console.log('🔧 Supabase Client Config:', {
-  url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  keyLength: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length
-})
-
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Missing Supabase environment variables!')
     throw new Error('Missing Supabase environment variables')
   }
 
@@ -19,13 +12,26 @@ export function createClient() {
     supabaseUrl,
     supabaseKey,
     {
-      auth: {
-        flowType: 'pkce',
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        persistSession: true,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        storageKey: 'sb-auth-token'
+      cookies: {
+        getAll() {
+          return document.cookie.split(';').map(cookie => {
+            const [name, ...rest] = cookie.trim().split('=')
+            return { name, value: rest.join('=') }
+          }).filter(cookie => cookie.name !== '')
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const cookieOptions = []
+            if (options?.maxAge) cookieOptions.push(`max-age=${options.maxAge}`)
+            if (options?.path) cookieOptions.push(`path=${options.path}`)
+            if (options?.domain) cookieOptions.push(`domain=${options.domain}`)
+            if (options?.sameSite) cookieOptions.push(`samesite=${options.sameSite}`)
+            if (options?.secure) cookieOptions.push('secure')
+
+            const cookieString = `${name}=${value}${cookieOptions.length > 0 ? '; ' + cookieOptions.join('; ') : ''}`
+            document.cookie = cookieString
+          })
+        }
       }
     }
   )
