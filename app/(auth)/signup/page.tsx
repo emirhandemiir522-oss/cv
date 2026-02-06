@@ -1,82 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
-
-export const dynamic = 'force-dynamic'
+import { signup } from './actions'
 
 export default function SignupPage() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const router = useRouter()
+    const [isPending, startTransition] = useTransition()
 
-    const handleSignup = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
+    const handleSubmit = (formData: FormData) => {
         setError(null)
 
-        console.log('📝 Signup attempt started', { email })
-
-        try {
-            const supabase = createClient()
-            console.log('📡 Calling signUp...')
-
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
-                }
-            })
-
-            console.log('📥 Signup response:', {
-                hasUser: !!authData?.user,
-                hasSession: !!authData?.session,
-                error: authError?.message,
-                sessionDetails: authData?.session ? {
-                    accessToken: authData.session.access_token.substring(0, 20) + '...',
-                    expiresAt: authData.session.expires_at
-                } : null
-            })
-
-            if (authError) {
-                if (authError.message === 'User already registered') {
-                    setError('An account with this email already exists. Please sign in instead.')
-                    setLoading(false)
-                    return
-                }
-                throw authError
+        startTransition(async () => {
+            const result = await signup(formData)
+            if (result?.error) {
+                setError(result.error)
             }
-
-            if (!authData.user) {
-                console.error('❌ No user returned')
-                throw new Error('Failed to create account')
-            }
-
-            if (authData.session) {
-                console.log('✅ Signup successful! Redirecting...')
-                window.location.href = '/dashboard'
-            } else {
-                console.log('⚠️ User created but no session (email confirmation required)')
-                window.location.href = '/login?message=Account created! Please log in.'
-            }
-        } catch (err: any) {
-            console.error('💥 Signup catch error:', err)
-            setError(err.message || 'Failed to create account')
-            setLoading(false)
-        }
+        })
     }
 
     return (
         <div className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-xl rounded-2xl p-8">
             <div className="text-center mb-8">
                 <Link href="/" className="inline-block">
-                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
                         C
                     </div>
                 </Link>
@@ -84,15 +32,14 @@ export default function SignupPage() {
                 <p className="text-gray-500 text-sm mt-2">Get 7 days of unlimited AI resume optimization</p>
             </div>
 
-            <form onSubmit={handleSignup} className="space-y-4">
+            <form action={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
                     <input
                         type="email"
+                        name="email"
                         placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black outline-none transition-all text-gray-900"
                         required
                     />
                 </div>
@@ -100,37 +47,32 @@ export default function SignupPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Create Password</label>
                     <input
                         type="password"
+                        name="password"
                         placeholder="At least 6 characters"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black outline-none transition-all text-gray-900"
                         required
                     />
                 </div>
 
                 {error && (
-                    <div className={`p-3 rounded-lg text-sm border ${
-                        error.includes('successfully') || error.includes('check your email')
-                            ? 'bg-green-50 text-green-700 border-green-100'
-                            : 'bg-red-50 text-red-600 border-red-100'
-                    }`}>
+                    <div className="p-3 rounded-lg text-sm border bg-red-50 text-red-600 border-red-100">
                         {error}
                     </div>
                 )}
 
                 <button
                     type="submit"
-                    disabled={loading}
-                    className="w-full flex items-center justify-center py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all shadow-lg shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                    disabled={isPending}
+                    className="w-full flex items-center justify-center py-2.5 bg-black hover:bg-gray-900 text-white rounded-lg font-medium transition-all shadow-lg shadow-black/20 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Start Free Trial'}
+                    {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Start Free Trial'}
                 </button>
             </form>
 
             <div className="mt-8 pt-6 border-t border-gray-100 text-center">
                 <p className="text-sm text-gray-600">
                     Already checked in?{' '}
-                    <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold hover:underline">
+                    <Link href="/login" className="text-black hover:underline font-semibold">
                         Sign in here
                     </Link>
                 </p>

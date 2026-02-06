@@ -1,20 +1,15 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense, useTransition } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, ArrowRight, Github } from 'lucide-react'
-
-export const dynamic = 'force-dynamic'
+import { login } from './actions'
 
 function LoginForm() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [message, setMessage] = useState<string | null>(null)
-    const router = useRouter()
+    const [isPending, startTransition] = useTransition()
     const searchParams = useSearchParams()
 
     useEffect(() => {
@@ -24,58 +19,16 @@ function LoginForm() {
         }
     }, [searchParams])
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
+    const handleSubmit = (formData: FormData) => {
         setError(null)
         setMessage(null)
 
-        console.log('🔐 Login attempt started', { email })
-
-        try {
-            const supabase = createClient()
-            console.log('📡 Calling signInWithPassword...')
-
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            })
-
-            console.log('📥 Supabase response:', {
-                hasSession: !!data?.session,
-                hasUser: !!data?.user,
-                error: error?.message,
-                sessionDetails: data?.session ? {
-                    accessToken: data.session.access_token.substring(0, 20) + '...',
-                    expiresAt: data.session.expires_at
-                } : null
-            })
-
-            if (error) {
-                console.error('❌ Login error:', error)
-                throw error
+        startTransition(async () => {
+            const result = await login(formData)
+            if (result?.error) {
+                setError(result.error)
             }
-
-            if (!data.session) {
-                console.error('❌ No session returned')
-                throw new Error('Invalid credentials')
-            }
-
-            console.log('✅ Login successful!')
-            console.log('📝 Session details:', {
-                accessToken: data.session.access_token.substring(0, 20) + '...',
-                expiresAt: data.session.expires_at
-            })
-
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            console.log('🔄 Redirecting to dashboard...')
-            window.location.href = '/dashboard'
-        } catch (err: any) {
-            console.error('💥 Login catch error:', err)
-            setError(err.message || 'Invalid email or password')
-            setLoading(false)
-        }
+        })
     }
 
     return (
@@ -89,14 +42,13 @@ function LoginForm() {
                 <p className="text-gray-500">Enter your credentials to verify your account.</p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form action={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-900">Email</label>
                     <input
                         type="email"
+                        name="email"
                         placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-gray-400 text-black"
                         required
                     />
@@ -108,9 +60,8 @@ function LoginForm() {
                     </div>
                     <input
                         type="password"
+                        name="password"
                         placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-gray-400 text-black"
                         required
                     />
@@ -132,10 +83,10 @@ function LoginForm() {
 
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={isPending}
                     className="w-full flex items-center justify-center gap-2 py-3 bg-black hover:bg-gray-900 text-white rounded-xl font-medium transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                    {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                         <>
                             Sign In
                             <ArrowRight className="w-4 h-4" />
