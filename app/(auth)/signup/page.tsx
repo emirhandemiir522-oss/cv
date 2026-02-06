@@ -20,8 +20,11 @@ export default function SignupPage() {
         setLoading(true)
         setError(null)
 
+        console.log('📝 Signup attempt started', { email })
+
         try {
             const supabase = createClient()
+            console.log('📡 Calling signUp...')
 
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
@@ -31,22 +34,41 @@ export default function SignupPage() {
                 }
             })
 
+            console.log('📥 Signup response:', {
+                hasUser: !!authData?.user,
+                hasSession: !!authData?.session,
+                error: authError?.message,
+                sessionDetails: authData?.session ? {
+                    accessToken: authData.session.access_token.substring(0, 20) + '...',
+                    expiresAt: authData.session.expires_at
+                } : null
+            })
+
             if (authError) {
+                console.error('❌ Signup error:', authError)
                 throw authError
             }
 
             if (!authData.user) {
+                console.error('❌ No user returned')
                 throw new Error('Failed to create account')
             }
 
             if (authData.session) {
+                console.log('✅ Signup successful! Session created immediately.')
+                console.log('🔄 Redirecting to dashboard...')
+                // Force a hard navigation to ensure cookies are set
                 window.location.href = '/dashboard'
+                // Wait a bit to ensure redirect happens
+                await new Promise(resolve => setTimeout(resolve, 1000))
             } else {
+                console.log('⚠️ User created but no session (email confirmation required)')
+                console.log('🔄 Redirecting to login...')
                 window.location.href = '/login?message=Account created! Please log in.'
             }
         } catch (err: any) {
+            console.error('💥 Signup catch error:', err)
             setError(err.message || 'Failed to create account')
-        } finally {
             setLoading(false)
         }
     }

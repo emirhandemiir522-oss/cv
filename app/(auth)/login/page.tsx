@@ -30,25 +30,48 @@ function LoginForm() {
         setError(null)
         setMessage(null)
 
+        console.log('🔐 Login attempt started', { email })
+
         try {
             const supabase = createClient()
+            console.log('📡 Calling signInWithPassword...')
+
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
 
+            console.log('📥 Supabase response:', {
+                hasSession: !!data?.session,
+                hasUser: !!data?.user,
+                error: error?.message,
+                sessionDetails: data?.session ? {
+                    accessToken: data.session.access_token.substring(0, 20) + '...',
+                    expiresAt: data.session.expires_at
+                } : null
+            })
+
             if (error) {
+                console.error('❌ Login error:', error)
                 throw error
             }
 
             if (!data.session) {
+                console.error('❌ No session returned')
                 throw new Error('Invalid credentials')
             }
 
+            console.log('✅ Login successful! Session created.')
+            console.log('🔄 Redirecting to dashboard...')
+
+            // Force a hard navigation to ensure cookies are set
             window.location.href = '/dashboard'
+
+            // Wait a bit to ensure redirect happens
+            await new Promise(resolve => setTimeout(resolve, 1000))
         } catch (err: any) {
+            console.error('💥 Login catch error:', err)
             setError(err.message || 'Invalid email or password')
-        } finally {
             setLoading(false)
         }
     }

@@ -35,19 +35,54 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const getData = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            setUser(user)
+            console.log('🏠 Dashboard: Checking authentication...')
 
-            if (user) {
-                const { data } = await supabase
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser()
+
+                console.log('👤 Dashboard user check:', {
+                    hasUser: !!user,
+                    userId: user?.id,
+                    email: user?.email,
+                    error: error?.message
+                })
+
+                if (error) {
+                    console.error('❌ Dashboard auth error:', error)
+                    console.log('🔄 Redirecting to login...')
+                    router.push('/login')
+                    return
+                }
+
+                if (!user) {
+                    console.log('⚠️ No user found, redirecting to login')
+                    router.push('/login')
+                    return
+                }
+
+                console.log('✅ User authenticated in dashboard')
+                setUser(user)
+
+                console.log('📊 Fetching user resumes...')
+                const { data, error: resumesError } = await supabase
                     .from('resumes')
                     .select('*')
                     .eq('user_id', user.id)
                     .order('created_at', { ascending: false })
                     .limit(5)
-                setResumes(data || [])
+
+                if (resumesError) {
+                    console.error('❌ Error fetching resumes:', resumesError)
+                } else {
+                    console.log('📄 Resumes fetched:', data?.length || 0)
+                    setResumes(data || [])
+                }
+            } catch (err) {
+                console.error('💥 Dashboard getData error:', err)
+                router.push('/login')
+            } finally {
+                setLoading(false)
             }
-            setLoading(false)
         }
         getData()
     }, [])
