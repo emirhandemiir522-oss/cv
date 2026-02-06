@@ -34,57 +34,40 @@ export default function DashboardPage() {
     const router = useRouter()
 
     useEffect(() => {
-        const getData = async () => {
-            console.log('🏠 Dashboard: Checking authentication...')
+        const checkAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
 
-            try {
-                const { data: { user }, error } = await supabase.auth.getUser()
-
-                console.log('👤 Dashboard user check:', {
-                    hasUser: !!user,
-                    userId: user?.id,
-                    email: user?.email,
-                    error: error?.message
-                })
-
-                if (error) {
-                    console.error('❌ Dashboard auth error:', error)
-                    console.log('🔄 Redirecting to login...')
-                    router.push('/login')
-                    return
-                }
-
-                if (!user) {
-                    console.log('⚠️ No user found, redirecting to login')
-                    router.push('/login')
-                    return
-                }
-
-                console.log('✅ User authenticated in dashboard')
-                setUser(user)
-
-                console.log('📊 Fetching user resumes...')
-                const { data, error: resumesError } = await supabase
-                    .from('resumes')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false })
-                    .limit(5)
-
-                if (resumesError) {
-                    console.error('❌ Error fetching resumes:', resumesError)
-                } else {
-                    console.log('📄 Resumes fetched:', data?.length || 0)
-                    setResumes(data || [])
-                }
-            } catch (err) {
-                console.error('💥 Dashboard getData error:', err)
-                router.push('/login')
-            } finally {
-                setLoading(false)
+            if (!session) {
+                router.replace('/login')
+                return
             }
+
+            setUser(session.user)
+
+            const { data, error: resumesError } = await supabase
+                .from('resumes')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .order('created_at', { ascending: false })
+                .limit(5)
+
+            if (!resumesError) {
+                setResumes(data || [])
+            }
+            setLoading(false)
         }
-        getData()
+
+        checkAuth()
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (!session) {
+                router.replace('/login')
+            } else {
+                setUser(session.user)
+            }
+        })
+
+        return () => subscription.unsubscribe()
     }, [])
 
     const handleCreateBase = async () => {

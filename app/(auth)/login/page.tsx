@@ -62,12 +62,7 @@ function LoginForm() {
             }
 
             console.log('✅ Login successful! Redirecting...')
-            console.log('🍪 Current cookies:', document.cookie)
-
-            setTimeout(() => {
-                console.log('🍪 Cookies after 500ms:', document.cookie)
-                window.location.href = '/dashboard'
-            }, 500)
+            router.replace('/dashboard')
         } catch (err: any) {
             console.error('💥 Login catch error:', err)
             setError(err.message || 'Invalid email or password')
