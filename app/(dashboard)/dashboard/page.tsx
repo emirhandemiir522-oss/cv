@@ -6,15 +6,12 @@ import { useRouter } from 'next/navigation'
 import {
     Upload,
     FileText,
-    CreditCard,
     TrendingUp,
-    Layout,
     Zap,
     Loader2,
     ArrowRight,
     Briefcase,
     FileSearch,
-    Crown,
     Plus,
     Activity
 } from 'lucide-react'
@@ -235,17 +232,6 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Pro Banner */}
-                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-6 border border-amber-100 text-center">
-                        <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Crown className="w-6 h-6" />
-                        </div>
-                        <h3 className="font-bold text-amber-900 mb-2">Upgrade to Pro</h3>
-                        <p className="text-sm text-amber-800/70 mb-6">Get unlimited AI credits and priority support.</p>
-                        <button className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-amber-500/20">
-                            View Plans
-                        </button>
-                    </div>
                 </div>
             </div>
 
