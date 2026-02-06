@@ -34,6 +34,7 @@ function LoginForm() {
                 return
             }
 
+            router.refresh()
             router.push('/dashboard')
         } catch {
             setError('An unexpected error occurred. Please try again.')

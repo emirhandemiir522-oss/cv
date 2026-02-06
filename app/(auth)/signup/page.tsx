@@ -27,6 +27,7 @@ export default function SignupPage() {
             }
 
             if (result?.redirect) {
+                router.refresh()
                 router.push(result.redirect)
             }
         } catch {
