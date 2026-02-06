@@ -61,17 +61,8 @@ function LoginForm() {
                 throw new Error('Invalid credentials')
             }
 
-            console.log('✅ Login successful! Session created.')
-            console.log('🔄 Refreshing router and redirecting...')
-
-            // Refresh the router to update server-side session
-            router.refresh()
-
-            // Small delay to ensure cookies are processed
-            await new Promise(resolve => setTimeout(resolve, 100))
-
-            // Navigate to dashboard
-            router.push('/dashboard')
+            console.log('✅ Login successful! Redirecting...')
+            window.location.href = '/dashboard'
         } catch (err: any) {
             console.error('💥 Login catch error:', err)
             setError(err.message || 'Invalid email or password')

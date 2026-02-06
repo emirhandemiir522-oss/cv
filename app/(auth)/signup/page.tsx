@@ -55,21 +55,11 @@ export default function SignupPage() {
             }
 
             if (authData.session) {
-                console.log('✅ Signup successful! Session created immediately.')
-                console.log('🔄 Refreshing router and redirecting...')
-
-                // Refresh the router to update server-side session
-                router.refresh()
-
-                // Small delay to ensure cookies are processed
-                await new Promise(resolve => setTimeout(resolve, 100))
-
-                // Navigate to dashboard
-                router.push('/dashboard')
+                console.log('✅ Signup successful! Redirecting...')
+                window.location.href = '/dashboard'
             } else {
                 console.log('⚠️ User created but no session (email confirmation required)')
-                console.log('🔄 Redirecting to login...')
-                router.push('/login?message=Account created! Please log in.')
+                window.location.href = '/login?message=Account created! Please log in.'
             }
         } catch (err: any) {
             console.error('💥 Signup catch error:', err)
