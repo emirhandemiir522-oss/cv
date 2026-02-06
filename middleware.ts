@@ -44,32 +44,23 @@ export async function middleware(request: NextRequest) {
     let user = null
 
     try {
-        const { data, error } = await supabase.auth.getUser()
-        user = data.user
+        const { data: userData } = await supabase.auth.getUser()
+        user = userData?.user ?? null
 
-        if (!user && error) {
+        if (!user) {
             const { data: sessionData } = await supabase.auth.getSession()
-            user = sessionData.session?.user ?? null
+            user = sessionData?.session?.user ?? null
         }
-    } catch {
-        const hasAuthCookies = request.cookies.getAll().some(
-            cookie => cookie.name.startsWith('sb-') && cookie.name.includes('auth-token')
-        )
-        if (hasAuthCookies && isProtectedRoute) {
-            return supabaseResponse
-        }
+    } catch (error) {
+        // Session check failed, skip user check
     }
 
     if (isProtectedRoute && !user) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
+        return NextResponse.redirect(new URL('/login', request.url))
     }
 
     if (isAuthRoute && user) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
+        return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     return supabaseResponse
