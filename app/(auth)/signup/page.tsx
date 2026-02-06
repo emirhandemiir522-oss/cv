@@ -49,8 +49,9 @@ export default function SignupPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+                    <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
                     <input
+                        id="signup-email"
                         type="email"
                         name="email"
                         placeholder="name@example.com"
@@ -59,8 +60,9 @@ export default function SignupPage() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Create Password</label>
+                    <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1.5">Create Password</label>
                     <input
+                        id="signup-password"
                         type="password"
                         name="password"
                         placeholder="At least 6 characters"

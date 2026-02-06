@@ -54,8 +54,9 @@ function LoginForm() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-900">Email</label>
+                    <label htmlFor="login-email" className="text-sm font-medium text-gray-900">Email</label>
                     <input
+                        id="login-email"
                         type="email"
                         name="email"
                         placeholder="name@example.com"
@@ -65,10 +66,11 @@ function LoginForm() {
                 </div>
                 <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-gray-900">Password</label>
+                        <label htmlFor="login-password" className="text-sm font-medium text-gray-900">Password</label>
                         <Link href="#" className="text-xs text-gray-500 hover:text-black font-medium transition-colors">Forgot password?</Link>
                     </div>
                     <input
+                        id="login-password"
                         type="password"
                         name="password"
                         placeholder="--------"
