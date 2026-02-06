@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, ArrowRight, Github } from 'lucide-react'
 import { login } from './actions'
@@ -11,7 +11,6 @@ function LoginForm() {
     const [error, setError] = useState<string | null>(null)
     const [message, setMessage] = useState<string | null>(null)
     const searchParams = useSearchParams()
-    const router = useRouter()
 
     useEffect(() => {
         const msg = searchParams.get('message')
@@ -31,11 +30,7 @@ function LoginForm() {
             if (result?.error) {
                 setError(result.error)
                 setLoading(false)
-                return
             }
-
-            router.refresh()
-            router.push('/dashboard')
         } catch {
             setError('An unexpected error occurred. Please try again.')
             setLoading(false)

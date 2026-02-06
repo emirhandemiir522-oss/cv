@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { signup } from './actions'
@@ -9,7 +8,6 @@ import { signup } from './actions'
 export default function SignupPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const router = useRouter()
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -23,12 +21,6 @@ export default function SignupPage() {
             if (result?.error) {
                 setError(result.error)
                 setLoading(false)
-                return
-            }
-
-            if (result?.redirect) {
-                router.refresh()
-                router.push(result.redirect)
             }
         } catch {
             setError('An unexpected error occurred. Please try again.')
