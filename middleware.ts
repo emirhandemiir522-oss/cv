@@ -15,8 +15,13 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => {
+                    cookiesToSet.forEach(({ name, value }) => {
                         request.cookies.set(name, value)
+                    })
+                    supabaseResponse = NextResponse.next({
+                        request,
+                    })
+                    cookiesToSet.forEach(({ name, value, options }) => {
                         supabaseResponse.cookies.set(name, value, options)
                     })
                 },
@@ -28,11 +33,13 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
-        request.nextUrl.pathname.startsWith('/editor') ||
-        request.nextUrl.pathname.startsWith('/optimize')
+    const pathname = request.nextUrl.pathname
 
-    const isAuthRoute = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup'
+    const isProtectedRoute = pathname.startsWith('/dashboard') ||
+        pathname.startsWith('/editor') ||
+        pathname.startsWith('/optimize')
+
+    const isAuthRoute = pathname === '/login' || pathname === '/signup'
 
     if (isProtectedRoute && !user) {
         const url = request.nextUrl.clone()
@@ -50,5 +57,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: [],
+    matcher: [
+        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    ],
 }

@@ -36,57 +36,37 @@ export default function DashboardPage() {
     useEffect(() => {
         let mounted = true
 
-        const checkAuth = async () => {
+        const loadData = async () => {
             try {
-                const { data: { user }, error } = await supabase.auth.getUser()
+                const { data: { user } } = await supabase.auth.getUser()
 
-                if (!mounted) return
-
-                if (error || !user) {
-                    router.replace('/login')
+                if (!mounted || !user) {
+                    if (mounted) setLoading(false)
                     return
                 }
 
                 setUser(user)
 
-                const { data, error: resumesError } = await supabase
+                const { data } = await supabase
                     .from('resumes')
                     .select('*')
                     .eq('user_id', user.id)
                     .order('created_at', { ascending: false })
                     .limit(5)
 
-                if (!resumesError && mounted) {
-                    setResumes(data || [])
-                }
                 if (mounted) {
+                    setResumes(data || [])
                     setLoading(false)
                 }
-            } catch (err) {
-                console.error('Dashboard auth error:', err)
-                if (mounted) {
-                    router.replace('/login')
-                }
+            } catch {
+                if (mounted) setLoading(false)
             }
         }
 
-        checkAuth()
+        loadData()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (!mounted) return
-
-            if (!session) {
-                router.replace('/login')
-            } else {
-                setUser(session.user)
-            }
-        })
-
-        return () => {
-            mounted = false
-            subscription.unsubscribe()
-        }
-    }, [router, supabase])
+        return () => { mounted = false }
+    }, [])
 
     const handleCreateBase = async () => {
         setCreating(true)
