@@ -59,6 +59,7 @@ function LoginForm() {
                         id="login-email"
                         type="email"
                         name="email"
+                        autoComplete="email"
                         placeholder="name@example.com"
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-gray-400 text-black"
                         required
@@ -73,6 +74,7 @@ function LoginForm() {
                         id="login-password"
                         type="password"
                         name="password"
+                        autoComplete="current-password"
                         placeholder="--------"
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-gray-400 text-black"
                         required

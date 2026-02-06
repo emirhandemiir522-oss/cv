@@ -54,6 +54,7 @@ export default function SignupPage() {
                         id="signup-email"
                         type="email"
                         name="email"
+                        autoComplete="email"
                         placeholder="name@example.com"
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black outline-none transition-all text-gray-900"
                         required
@@ -65,6 +66,7 @@ export default function SignupPage() {
                         id="signup-password"
                         type="password"
                         name="password"
+                        autoComplete="new-password"
                         placeholder="At least 6 characters"
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black outline-none transition-all text-gray-900"
                         required
