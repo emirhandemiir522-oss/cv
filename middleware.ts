@@ -2,10 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
+    let supabaseResponse = NextResponse.next({
+        request,
     })
 
     const supabase = createServerClient(
@@ -20,38 +18,40 @@ export async function middleware(request: NextRequest) {
                     cookiesToSet.forEach(({ name, value }) =>
                         request.cookies.set(name, value)
                     )
-                    response = NextResponse.next({
+                    supabaseResponse = NextResponse.next({
                         request,
                     })
                     cookiesToSet.forEach(({ name, value, options }) =>
-                        response.cookies.set(name, value, options)
+                        supabaseResponse.cookies.set(name, value, options)
                     )
                 },
             },
         }
     )
 
-    try {
-        const {
-            data: { user },
-        } = await supabase.auth.getUser()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
 
-        // Protect dashboard and editor routes
-        if ((request.nextUrl.pathname.startsWith('/dashboard') ||
-             request.nextUrl.pathname.startsWith('/editor') ||
-             request.nextUrl.pathname.startsWith('/optimize')) && !user) {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
+    const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
+        request.nextUrl.pathname.startsWith('/editor') ||
+        request.nextUrl.pathname.startsWith('/optimize')
 
-        // Redirect to dashboard if already logged in
-        if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') && user) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
-        }
-    } catch (error) {
-        console.error('Middleware auth error:', error)
+    const isAuthRoute = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup'
+
+    if (isProtectedRoute && !user) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
     }
 
-    return response
+    if (isAuthRoute && user) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+    }
+
+    return supabaseResponse
 }
 
 export const config = {
