@@ -25,20 +25,25 @@ function LoginForm() {
         setError(null)
         setMessage(null)
 
-        const supabase = createClient()
+        try {
+            const supabase = createClient()
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        })
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
 
-        if (error) {
-            setError(error.message)
+            if (error) {
+                setError(error.message)
+                setLoading(false)
+                return
+            }
+
+            window.location.href = '/dashboard'
+        } catch {
+            setError('An unexpected error occurred. Please try again.')
             setLoading(false)
-            return
         }
-
-        window.location.href = '/dashboard'
     }
 
     return (

@@ -16,29 +16,34 @@ export default function SignupPage() {
         setLoading(true)
         setError(null)
 
-        const supabase = createClient()
+        try {
+            const supabase = createClient()
 
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-        })
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+            })
 
-        if (error) {
-            if (error.message === 'User already registered') {
-                setError('An account with this email already exists. Please sign in instead.')
-            } else {
-                setError(error.message)
+            if (error) {
+                if (error.message === 'User already registered') {
+                    setError('An account with this email already exists. Please sign in instead.')
+                } else {
+                    setError(error.message)
+                }
+                setLoading(false)
+                return
             }
+
+            if (data.session) {
+                window.location.href = '/dashboard'
+                return
+            }
+
+            window.location.href = '/login?message=Account created! Please log in.'
+        } catch {
+            setError('An unexpected error occurred. Please try again.')
             setLoading(false)
-            return
         }
-
-        if (data.session) {
-            window.location.href = '/dashboard'
-            return
-        }
-
-        window.location.href = '/login?message=Account created! Please log in.'
     }
 
     return (
