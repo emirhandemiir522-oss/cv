@@ -1,15 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { signup } from './actions'
 
 export default function SignupPage() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const router = useRouter()
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -17,29 +17,18 @@ export default function SignupPage() {
         setError(null)
 
         try {
-            const supabase = createClient()
+            const formData = new FormData(e.currentTarget)
+            const result = await signup(formData)
 
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-            })
-
-            if (error) {
-                if (error.message === 'User already registered') {
-                    setError('An account with this email already exists. Please sign in instead.')
-                } else {
-                    setError(error.message)
-                }
+            if (result?.error) {
+                setError(result.error)
                 setLoading(false)
                 return
             }
 
-            if (data.session) {
-                window.location.href = '/dashboard'
-                return
+            if (result?.redirect) {
+                router.push(result.redirect)
             }
-
-            window.location.href = '/login?message=Account created! Please log in.'
         } catch {
             setError('An unexpected error occurred. Please try again.')
             setLoading(false)
@@ -63,9 +52,8 @@ export default function SignupPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
                     <input
                         type="email"
+                        name="email"
                         placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black outline-none transition-all text-gray-900"
                         required
                     />
@@ -74,9 +62,8 @@ export default function SignupPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Create Password</label>
                     <input
                         type="password"
+                        name="password"
                         placeholder="At least 6 characters"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black outline-none transition-all text-gray-900"
                         required
                     />

@@ -1,18 +1,17 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, ArrowRight, Github } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { login } from './actions'
 
 function LoginForm() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [message, setMessage] = useState<string | null>(null)
     const searchParams = useSearchParams()
+    const router = useRouter()
 
     useEffect(() => {
         const msg = searchParams.get('message')
@@ -26,20 +25,16 @@ function LoginForm() {
         setMessage(null)
 
         try {
-            const supabase = createClient()
+            const formData = new FormData(e.currentTarget)
+            const result = await login(formData)
 
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            })
-
-            if (error) {
-                setError(error.message)
+            if (result?.error) {
+                setError(result.error)
                 setLoading(false)
                 return
             }
 
-            window.location.href = '/dashboard'
+            router.push('/dashboard')
         } catch {
             setError('An unexpected error occurred. Please try again.')
             setLoading(false)
@@ -62,9 +57,8 @@ function LoginForm() {
                     <label className="text-sm font-medium text-gray-900">Email</label>
                     <input
                         type="email"
+                        name="email"
                         placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-gray-400 text-black"
                         required
                     />
@@ -76,9 +70,8 @@ function LoginForm() {
                     </div>
                     <input
                         type="password"
+                        name="password"
                         placeholder="--------"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all placeholder:text-gray-400 text-black"
                         required
                     />
