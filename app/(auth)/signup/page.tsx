@@ -40,10 +40,9 @@ export default function SignupPage() {
             }
 
             if (authData.session) {
-                router.push('/dashboard')
-                router.refresh()
+                window.location.href = '/dashboard'
             } else {
-                router.push('/login?message=Account created! Please log in.')
+                window.location.href = '/login?message=Account created! Please log in.'
             }
         } catch (err: any) {
             setError(err.message || 'Failed to create account')

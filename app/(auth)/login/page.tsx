@@ -45,8 +45,7 @@ function LoginForm() {
                 throw new Error('Invalid credentials')
             }
 
-            router.push('/dashboard')
-            router.refresh()
+            window.location.href = '/dashboard'
         } catch (err: any) {
             setError(err.message || 'Invalid email or password')
         } finally {
