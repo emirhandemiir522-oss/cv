@@ -7,16 +7,41 @@ import { createClient } from '@/lib/supabase/server'
 export async function signup(formData: FormData) {
     const supabase = await createClient()
 
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
     const { data, error } = await supabase.auth.signUp({
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
+        email,
+        password,
     })
 
     if (error) {
         if (error.message === 'User already registered') {
             return { error: 'An account with this email already exists. Please sign in instead.' }
         }
+        if (error.message.includes('Database error')) {
+            return { error: 'Failed to create account. Please try again.' }
+        }
         return { error: error.message }
+    }
+
+    if (data.user && data.session) {
+        const { error: profileError } = await supabase
+            .from('users')
+            .upsert({
+                id: data.user.id,
+                email: email,
+                created_at: new Date().toISOString(),
+                trial_started_at: new Date().toISOString(),
+                subscription_status: 'trialing'
+            }, {
+                onConflict: 'id',
+                ignoreDuplicates: false
+            })
+
+        if (profileError) {
+            console.error('Profile creation error:', profileError)
+        }
     }
 
     revalidatePath('/', 'layout')
